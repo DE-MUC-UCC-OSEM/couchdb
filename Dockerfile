@@ -1,7 +1,7 @@
 FROM opensuse/tumbleweed:latest AS app
 
 RUN zypper update --no-confirm && \
-    zypper install --no-confirm wget make autoconf gcc-c++ awk openssl-devel libicu-devel mozjs78 mozjs78-devel libmozjs-78-0
+    zypper install --no-confirm wget make autoconf gcc-c++ awk openssl-devel libicu-devel
 
 WORKDIR /usr/src
 
@@ -18,7 +18,7 @@ ARG FAUXTON_VERSION
 RUN wget https://dlcdn.apache.org/couchdb/source/$COUCHDB_VERSION/apache-couchdb-$COUCHDB_VERSION.tar.gz && \
     tar -xvf apache-couchdb-$COUCHDB_VERSION.tar.gz && \
     cd apache-couchdb-$COUCHDB_VERSION && \
-    ./configure --spidermonkey-version 78 && \
+    ./configure --js-engine=quickjs --disable-spidermonkey && \
     rm -Rf src/fauxton/* && \
     rm -Rf src/fauxton/.* && \
     curl -L https://github.com/apache/couchdb-fauxton/archive/refs/tags/v$FAUXTON_VERSION.tar.gz | tar --directory src/fauxton --strip-components 1 -zxvf - && \
@@ -44,8 +44,8 @@ RUN mkdir -p /opt/couchdb && \
     tar --directory /opt/couchdb -xvf /tmp/couchdb.tar.xz && \
     chown -R couchdb:couchdb /opt/couchdb && \
     zypper update --no-confirm && \
-    zypper install --no-confirm libmozjs-78-0 && \
-    rpm -e --allmatches $(rpm -qa --qf "%{NAME}\n" | grep -v -E "bash|coreutils|filesystem|glibc$|libacl1|libattr1|libcap2|libgcc_s1|libgmp|libncurses|libpcre1|libreadline|libselinux|libstdc\+\+|openSUSE-release|system-user-root|terminfo-base|libpcre2|sed|libz1|libjitterentropy3|libopenssl3|crypto-policies|libmozjs-78-0|libicu75|timezone") && \
+    zypper install --no-confirm libicu && \
+    rpm -e --allmatches $(rpm -qa --qf "%{NAME}\n" | grep -v -E "bash|coreutils|filesystem|glibc$|libacl1|libattr1|libcap2|libgcc_s1|libgmp|libncurses|libpcre1|libreadline|libselinux|libstdc\+\+|openSUSE-release|system-user-root|terminfo-base|libpcre2|sed|libz1|libjitterentropy3|libopenssl3|crypto-policies|libicu75|timezone") && \
     rm -Rf /etc/zypp && \
     rm -Rf /usr/lib/zypp* && \
     rm -Rf /var/{cache,log,run}/* && \
@@ -70,8 +70,6 @@ ENTRYPOINT ["/opt/couchdb/docker-entrypoint.sh"]
 ENV COUCHDB_ARGS_FILE="/opt/couchdb/etc/vm.args"
 
 EXPOSE 5984 4369 9100
-
-VOLUME /opt/couchdb/data
 
 USER 5984:5984
 

@@ -17,5 +17,6 @@ else
 fi
 
 printf "[chttpd]\nbind_address = 0.0.0.0\nport = 5984\n" > /opt/couchdb/etc/local.d/10-binding.ini
+printf "[couchdb]\njs_engine = quickjs\n" > /opt/couchdb/etc/local.d/10-quickjs.ini
 
 exec "$@"
