@@ -2,12 +2,16 @@
 
 set -e
 
+if [ "$SINGLE_NODE" ]; then
+  printf "[couchdb]\nsingle_node = true\n\n[cluster]\nn = 1\n" /opt/couchdb/etc/default.d/00-setup.ini
+fi
+
 if [ "$COUCHDB_USER" ] && [ "$COUCHDB_PASSWORD" ]; then
   printf "[admins]\n%s = %s\n" "$COUCHDB_USER" "$COUCHDB_PASSWORD" > /opt/couchdb/etc/default.d/99-creds.ini
 fi
 
 if [ "$COUCHDB_SECRET" ]; then
-  printf "\n[chttpd_auth]\nsecret = %s\n" "$COUCHDB_SECRET" > /opt/couchdb/etc/default.d/99-secret.ini
+  printf "[chttpd_auth]\nsecret = %s\n" "$COUCHDB_SECRET" > /opt/couchdb/etc/default.d/99-secret.ini
 fi
 
 if [ "$NODENAME" ]; then
