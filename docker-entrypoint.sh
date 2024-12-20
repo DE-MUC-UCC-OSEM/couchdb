@@ -3,7 +3,7 @@
 set -e
 
 if [ "$SINGLE_NODE" ]; then
-  printf "[couchdb]\nsingle_node = true\n\n[cluster]\nn = 1\n" /opt/couchdb/etc/default.d/00-setup.ini
+  printf "[couchdb]\nsingle_node = true\n\n[cluster]\nn = 1\n" > /opt/couchdb/etc/default.d/00-setup.ini
 fi
 
 if [ "$COUCHDB_USER" ] && [ "$COUCHDB_PASSWORD" ]; then
