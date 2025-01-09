@@ -71,6 +71,4 @@ ENV COUCHDB_ARGS_FILE="/opt/couchdb/etc/vm.args"
 
 EXPOSE 5984 4369 9100
 
-USER 5984:5984
-
-CMD ["/opt/couchdb/bin/couchdb"]
+CMD ["/bin/chroot", "--userspec=5984:5984", "--skip-chdir", "/", "/opt/couchdb/bin/couchdb"]
