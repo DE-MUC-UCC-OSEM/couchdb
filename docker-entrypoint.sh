@@ -15,12 +15,20 @@ if [ "$COUCHDB_SECRET" ]; then
 fi
 
 if [ "$NODENAME" ]; then
-  printf "\n-name couchdb@%s\n" "$NODENAME" >> /opt/couchdb/etc/vm.args
+  printf "\n-name couchdb@%s" "$NODENAME" >> /opt/couchdb/etc/vm.args
 else
-  printf "\n-name couchdb@localhost\n" >> /opt/couchdb/etc/vm.args
+  printf "\n-name couchdb@localhost" >> /opt/couchdb/etc/vm.args
+fi
+
+if [ "$ERLANG_COOKIE" ]; then
+  printf "\n-setcookie '%s'" "$ERLANG_COOKIE" >> /opt/couchdb/etc/vm.args
+else
+  printf "\n-setcookie 'erlang-magic-cookie'" >> /opt/couchdb/etc/vm.args
 fi
 
 printf "[chttpd]\nbind_address = 0.0.0.0\nport = 5984\n" > /opt/couchdb/etc/default.d/10-binding.ini
 printf "[couchdb]\njs_engine = quickjs\n" > /opt/couchdb/etc/default.d/10-quickjs.ini
+
+chown -R couchdb:couchdb /opt/couchdb
 
 exec "$@"
