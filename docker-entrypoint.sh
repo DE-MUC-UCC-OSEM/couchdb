@@ -3,7 +3,15 @@
 set -e
 
 if [ "$SINGLE_NODE" ]; then
-  printf "[couchdb]\nsingle_node = true\n\n[cluster]\nn = 1\n" > /opt/couchdb/etc/default.d/00-setup.ini
+  printf "[couchdb]\nsingle_node = true\n\n[cluster]\nn = 1\n" > /opt/couchdb/etc/default.d/00-single.ini
+else
+  printf "[cluster]\nn = 3\n" > /opt/couchdb/etc/default.d/00-cluster.ini
+  printf "reconnect_interval_sec = 10\n" >> /opt/couchdb/etc/default.d/00-cluster.ini
+  if [ "$COUCHDB_SHARDS" ]; then
+    printf "q = %s\n" "$COUCHDB_SHARDS" >> /opt/couchdb/etc/default.d/00-cluster.ini
+  else
+    printf "q = 4\n" >> /opt/couchdb/etc/default.d/00-cluster.ini
+  fi
 fi
 
 if [ "$COUCHDB_USER" ] && [ "$COUCHDB_PASSWORD" ]; then
@@ -28,6 +36,7 @@ fi
 
 printf "[chttpd]\nbind_address = 0.0.0.0\nport = 5984\n" > /opt/couchdb/etc/default.d/10-binding.ini
 printf "[couchdb]\njs_engine = quickjs\n" > /opt/couchdb/etc/default.d/10-quickjs.ini
+printf "[couchdb]\nmax_document_size = 25000000\n" > /opt/couchdb/etc/default.d/10-size.ini
 
 chown -R couchdb:couchdb /opt/couchdb
 
