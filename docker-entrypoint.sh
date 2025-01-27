@@ -36,7 +36,7 @@ fi
 
 printf "[chttpd]\nbind_address = 0.0.0.0\nport = 5984\n" > /opt/couchdb/etc/default.d/10-binding.ini
 printf "[couchdb]\njs_engine = quickjs\n" > /opt/couchdb/etc/default.d/10-quickjs.ini
-printf "[couchdb]\nmax_document_size = 10000000\n" > /opt/couchdb/etc/default.d/10-size.ini
+printf "[couchdb]\nmax_document_size = 25000000\n" > /opt/couchdb/etc/default.d/10-size.ini
 
 chown -R couchdb:couchdb /opt/couchdb
 
