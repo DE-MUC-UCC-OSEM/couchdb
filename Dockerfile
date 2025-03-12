@@ -32,8 +32,9 @@ ARG MEND_EMAIL
 ARG MEND_ORGANIZATION
 ARG MEND_URL
 ARG MEND_USER_KEY
-RUN curl -L https://downloads.mend.io/cli/linux_amd64/mend -o /usr/bin/mend && chmod +x /usr/bin/mend && \
-    /usr/bin/mend dep --dir /usr/src/apache-couchdb-$COUCHDB_VERSION --extended -s "OpenScape UC Portfolio//OSEM third party applications//couchdb-osem-sourcecode - $COUCHDB_VERSION-r$RELEASE_VERSION" -u
+RUN curl -L https://downloads.mend.io/cli/linux_amd64/mend -o /tmp/mend && chmod +x /tmp/mend && \
+    /tmp/mend update && \
+    /tmp/mend dep -d "/usr/src/apache-couchdb-$COUCHDB_VERSION" -e -s "OpenScape UC Portfolio//OSEM third party applications//couchdb-osem-sourcecode - $COUCHDB_VERSION-r$RELEASE_VERSION" -u --non-interactive
 
 FROM opensuse/tumbleweed:latest AS base
 
