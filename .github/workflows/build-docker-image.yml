@@ -12,17 +12,17 @@ on:
         type: string
         required: true
         description: 'Erlang OTP version'
-        default: '27.2'
+        default: '27.3.3'
       couchdb:
         type: string
         required: true
         description: 'CouchDB version'
-        default: '3.4.2'
+        default: '3.5.0'
       fauxton:
         type: string
         required: true
         description: 'CouchDB Fauxton version'
-        default: '1.3.1'
+        default: '1.3.4'
 
 jobs:
   build_and_push:
