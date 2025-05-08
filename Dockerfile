@@ -46,7 +46,7 @@ RUN mkdir -p /opt/couchdb && \
     chown -R couchdb:couchdb /opt/couchdb && \
     zypper update --no-confirm && \
     zypper install --no-confirm libicu && \
-    rpm -e --allmatches $(rpm -qa --qf "%{NAME}\n" | grep -v -E "bash|coreutils|filesystem|glibc$|libacl1|libattr1|libcap2|libgcc_s1|libgmp|libncurses|libpcre1|libreadline|libselinux|libstdc\+\+|openSUSE-release|system-user-root|terminfo-base|libpcre2|sed|libz1|libjitterentropy3|libopenssl3|crypto-policies|libicu76|timezone") && \
+    rpm -e --allmatches $(rpm -qa --qf "%{NAME}\n" | grep -v -E "bash|coreutils|filesystem|glibc$|libacl1|libattr1|libcap2|libgcc_s1|libgmp|libncurses|libpcre|libreadline|libselinux|libstdc\+\+|openSUSE-release|system-user-root|terminfo-base|sed|libz1|libjitterentropy3|libopenssl3|crypto-policies|libicu|timezone") && \
     rm -Rf /etc/zypp && \
     rm -Rf /usr/lib/zypp* && \
     rm -Rf /var/{cache,log,run}/* && \
