@@ -12,7 +12,7 @@ on:
         type: string
         required: true
         description: 'Erlang OTP version'
-        default: '27.3.3'
+        default: '27.3.4.3'
       couchdb:
         type: string
         required: true
@@ -43,6 +43,20 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare Dockerfile
+        env:
+          COUCHDB_VERSION: ${{ github.event.inputs.couchdb }}
+          RELEASE_VERSION: ${{ github.event.inputs.release }}
+          ERLANG_VERSION: ${{ github.event.inputs.erlang }}
+          FAUXTON_VERSION: ${{ github.event.inputs.fauxton }}
+        run: |
+          export CURRENT_TIME=$(date -u +"%Y-%m-%dT%H:%M:%S.%3NZ")
+          sed -i -e "s/__COUCHDB_VERSION__/$COUCHDB_VERSION/" ${{ github.workspace }}/Dockerfile
+          sed -i -e "s/__RELEASE_VERSION__/$RELEASE_VERSION/" ${{ github.workspace }}/Dockerfile
+          sed -i -e "s/__ERLANG_OTP_VERSION__/$ERLANG_VERSION/" ${{ github.workspace }}/Dockerfile
+          sed -i -e "s/__FAUXTON_VERSION__/$FAUXTON_VERSION/" ${{ github.workspace }}/Dockerfile
+          sed -i -e "s/__CURRENT_TIME__/$CURRENT_TIME/" ${{ github.workspace }}/Dockerfile
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta

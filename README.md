@@ -9,7 +9,12 @@ Building CouchDB from scratch using Erlang OTP and Fauxton sources. Everything p
 
 You can run the image via Docker
 ```
-docker run -dit ghcr.io/de-muc-ucc-osem/couchdb:3.5.0-r1-tumbleweed
+docker run -dit \
+  -e SINGLE_NODE=true \
+  -e COUCHDB_USER=admin \
+  -e COUCHDB_PASSWORD=admin \
+  -e COUCHDB_SECRET=s0m3rand0mstr1ng \
+  ghcr.io/de-muc-ucc-osem/couchdb:3.5.0-r3-tumbleweed
 ```
 
 To persist the data, mount a local folder or volume
@@ -26,7 +31,6 @@ The following can be configured via environment variables
 * COUCHDB_SHARDS (https://docs.couchdb.org/en/stable/cluster/sharding.html#shards-and-replicas)
 * NODENAME (https://www.erlang.org/doc/system/distributed.html#distribution-command-line-flags)
 * ERLANG_COOKIE (https://www.erlang.org/doc/system/distributed.html#distribution-command-line-flags)
-* 
 
 Any additional configuration can be applied by mounting an ini file into the container.
 ```

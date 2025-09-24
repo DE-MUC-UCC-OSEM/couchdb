@@ -63,7 +63,6 @@ COPY --chown=couchdb:couchdb --chmod=740 docker-entrypoint.sh /opt/couchdb
 RUN chown -R couchdb:couchdb /opt/couchdb
 
 FROM scratch
-
 COPY --from=base / /
 
 ENTRYPOINT ["/opt/couchdb/docker-entrypoint.sh"]
@@ -72,5 +71,14 @@ ENV HOME="/opt/couchdb"
 ENV COUCHDB_ARGS_FILE="/opt/couchdb/etc/vm.args"
 
 EXPOSE 5984 4369 9100
+
+LABEL org.opencontainers.image.vendor="Apache Software Foundation"
+LABEL org.opencontainers.image.title="Apache CouchDB"
+LABEL org.opencontainers.image.version="__COUCHDB_VERSION__-r__RELEASE_VERSION__-tumbleweed"
+LABEL org.opencontainers.image.licenses="Apache License 2.0"
+LABEL org.opencontainers.image.url="https://github.com/DE-MUC-UCC-OSEM/couchdb"
+LABEL org.opencontainers.image.source="https://github.com/DE-MUC-UCC-OSEM/couchdb"
+LABEL org.opencontainers.image.description="Apache CouchDB __COUCHDB_VERSION__-r__RELEASE_VERSION__-tumbleweed with ErlangOTP __ERLANG_OTP_VERSION__ and Fauxton __FAUXTON_VERSION__"
+LABEL org.opencontainers.image.created="__CURRENT_TIME__"
 
 CMD ["/bin/chroot", "--userspec=5984:5984", "--skip-chdir", "/", "/opt/couchdb/bin/couchdb"]
