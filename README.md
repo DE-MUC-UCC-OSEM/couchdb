@@ -14,7 +14,7 @@ docker run -dit \
   -e COUCHDB_USER=admin \
   -e COUCHDB_PASSWORD=admin \
   -e COUCHDB_SECRET=s0m3rand0mstr1ng \
-  ghcr.io/de-muc-ucc-osem/couchdb:3.5.0-r3-tumbleweed
+  ghcr.io/de-muc-ucc-osem/couchdb:3.5.0-r4-tumbleweed
 ```
 
 To persist the data, mount a local folder or volume
