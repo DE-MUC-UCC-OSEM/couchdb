@@ -12,12 +12,12 @@ on:
         type: string
         required: true
         description: 'Erlang OTP version'
-        default: '27.3.4.4'
+        default: '27.3.4.6'
       couchdb:
         type: string
         required: true
         description: 'CouchDB version'
-        default: '3.5.0'
+        default: '3.5.1'
       fauxton:
         type: string
         required: true
@@ -87,6 +87,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Scan Docker Image
+        if: ${{ success() }}
         env:
           IMAGE: ghcr.io/${{ github.repository }}:${{ github.event.inputs.couchdb }}-r${{ github.event.inputs.release }}-tumbleweed
           COUCHDB_VERSION: ${{ github.event.inputs.couchdb }}
@@ -100,7 +101,8 @@ jobs:
           /tmp/mend image ${IMAGE,,} -s "OpenScape UC Portfolio//OSEM third party applications//couchdb-osem-docker-image - $COUCHDB_VERSION-r$RELEASE_VERSION-tumbleweed"
         working-directory: /tmp
 
-      - name: Create a release
+      - name: Create release information
+        if: ${{ success() }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COUCHDB_VERSION: ${{ github.event.inputs.couchdb }}
@@ -108,8 +110,30 @@ jobs:
           FAUXTON_VERSION: ${{ github.event.inputs.fauxton }}
           RELEASE_VERSION: ${{ github.event.inputs.release }}
         run: |
+          # Add step summary
+          {
+            echo "# Apache CouchDB"
+            echo ""
+            echo "Build with Erlang OTP and QuickJS enabled by default. Running in an openSUSE Tumbleweed Image."
+            echo ""
+            echo "ghcr.io/de-muc-ucc-osem/couchdb:$COUCHDB_VERSION-r$RELEASE_VERSION-tumbleweed"
+            echo ""
+            echo "### Included versions"
+            echo ""
+            echo "| Package Name              | Version         |"
+            echo "|---------------------------|-----------------|"
+            echo "| Apache CouchDB | $COUCHDB_VERSION |"
+            echo "| Erlang OTP | $ERLANG_VERSION |"
+            echo "| Fauxton | $FAUXTON_VERSION |"
+          } >> $GITHUB_STEP_SUMMARY
+
           echo -e "CouchDB build details\n- CouchDB: $COUCHDB_VERSION\n- Erlang OTP: $ERLANG_VERSION\n- Fauxton: $FAUXTON_VERSION\n" > rn
           gh release create "$COUCHDB_VERSION-r$RELEASE_VERSION-tumbleweed" \
               --repo="$GITHUB_REPOSITORY" \
               --title="$COUCHDB_VERSION-r$RELEASE_VERSION-tumbleweed" \
               --notes-file rn
+
+      - name: Cleanup environment
+        if: ${{ always() }}
+        run: |
+          git clean -ffdx
