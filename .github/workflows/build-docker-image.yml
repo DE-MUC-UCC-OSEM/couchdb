@@ -40,9 +40,9 @@ jobs:
       - name: Log in to Github Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: artifactory.mitel.com
+          username: ${{ secrets.ARTIFACTORY_USER }}
+          password: ${{ secrets.ARTIFACTORY_TOKEN }}
 
       - name: Prepare Dockerfile
         env:
@@ -62,10 +62,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ${{ vars.ARTIFACTORY_IMG_URL }}/couchdb
           tags: |
             type=raw,value=${{ github.event.inputs.couchdb }}-r${{ github.event.inputs.release }}-tumbleweed
-            #type=raw,value=latest
 
       - name: Build and push Docker image
         id: push
@@ -89,7 +88,7 @@ jobs:
       - name: Scan Docker Image
         if: ${{ success() }}
         env:
-          IMAGE: ghcr.io/${{ github.repository }}:${{ github.event.inputs.couchdb }}-r${{ github.event.inputs.release }}-tumbleweed
+          IMAGE: ${{ vars.ARTIFACTORY_IMG_URL }}/couchdb:${{ github.event.inputs.couchdb }}-r${{ github.event.inputs.release }}-tumbleweed
           COUCHDB_VERSION: ${{ github.event.inputs.couchdb }}
           RELEASE_VERSION: ${{ github.event.inputs.release }}
           MEND_EMAIL: ${{ secrets.MEND_EMAIL }}
@@ -97,9 +96,9 @@ jobs:
           MEND_URL: ${{ secrets.MEND_URL }}
           MEND_USER_KEY: ${{ secrets.MEND_USER_KEY }}
         run: |
-          curl -L https://downloads.mend.io/cli/linux_amd64/mend -o /tmp/mend && chmod +x /tmp/mend && \
-          /tmp/mend image ${IMAGE,,} -s "OpenScape UC Portfolio//OSEM third party applications//couchdb-osem-docker-image - $COUCHDB_VERSION-r$RELEASE_VERSION-tumbleweed"
-        working-directory: /tmp
+          rm -f ${{ github.workspace }}/mend
+          curl https://downloads.mend.io/cli/linux_amd64/mend -o ${{ github.workspace }}/mend && chmod +x ${{ github.workspace }}/mend
+          ${{ github.workspace }}/mend image ${IMAGE,,} -s "OpenScape UC Portfolio//OSEM third party applications//couchdb-osem-docker-image - $COUCHDB_VERSION-r$RELEASE_VERSION-tumbleweed"
 
       - name: Create release information
         if: ${{ success() }}
@@ -109,6 +108,7 @@ jobs:
           ERLANG_VERSION: ${{ github.event.inputs.erlang }}
           FAUXTON_VERSION: ${{ github.event.inputs.fauxton }}
           RELEASE_VERSION: ${{ github.event.inputs.release }}
+          IMAGE: ${{ vars.ARTIFACTORY_IMG_URL }}/couchdb:${{ github.event.inputs.couchdb }}-r${{ github.event.inputs.release }}-tumbleweed
         run: |
           # Add step summary
           {
@@ -116,7 +116,7 @@ jobs:
             echo ""
             echo "Build with Erlang OTP and QuickJS enabled by default. Running in an openSUSE Tumbleweed Image."
             echo ""
-            echo "ghcr.io/de-muc-ucc-osem/couchdb:$COUCHDB_VERSION-r$RELEASE_VERSION-tumbleweed"
+            echo "${IMAGE}"
             echo ""
             echo "### Included versions"
             echo ""
@@ -127,11 +127,20 @@ jobs:
             echo "| Fauxton | $FAUXTON_VERSION |"
           } >> $GITHUB_STEP_SUMMARY
 
-          echo -e "CouchDB build details\n- CouchDB: $COUCHDB_VERSION\n- Erlang OTP: $ERLANG_VERSION\n- Fauxton: $FAUXTON_VERSION\n" > rn
+          cat > ${{ github.workspace }}/release-notes.md <<"EOF"
+          ## CouchDB release ${{ github.event.inputs.couchdb }}-${{ github.event.inputs.release }}
+          - **CouchDB version**: $COUCHDB_VERSION
+          - **Erlang OTP version**: $ERLANG_VERSION
+          - **Fauxton version**: $FAUXTON_VERSION
+          ```
+          docker pull ${IMAGE}
+          ```
+
+          EOF
           gh release create "$COUCHDB_VERSION-r$RELEASE_VERSION-tumbleweed" \
               --repo="$GITHUB_REPOSITORY" \
               --title="$COUCHDB_VERSION-r$RELEASE_VERSION-tumbleweed" \
-              --notes-file rn
+              --notes-file release-notes.md
 
       - name: Cleanup environment
         if: ${{ always() }}
