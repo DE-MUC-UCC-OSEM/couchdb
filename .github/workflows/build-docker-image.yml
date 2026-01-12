@@ -127,7 +127,7 @@ jobs:
             echo "| Fauxton | $FAUXTON_VERSION |"
           } >> $GITHUB_STEP_SUMMARY
 
-          cat > ${{ github.workspace }}/release-notes.md <<"EOF"
+          cat > ${{ github.workspace }}/release-notes.md <<EOF
           ## CouchDB release ${{ github.event.inputs.couchdb }}-${{ github.event.inputs.release }}
           - **CouchDB version**: $COUCHDB_VERSION
           - **Erlang OTP version**: $ERLANG_VERSION
