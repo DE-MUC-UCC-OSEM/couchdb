@@ -71,7 +71,7 @@ jobs:
         with:
           images: |
             ${{ vars.ARTIFACTORY_IMG_URL }}/couchdb
-            ghcr.io/${{ github.repository }}/couchdb
+            ghcr.io/${{ github.repository }}
           tags: |
             type=raw,value=${{ github.event.inputs.couchdb }}-r${{ github.event.inputs.release }}-tumbleweed
 
