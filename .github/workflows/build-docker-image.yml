@@ -12,7 +12,7 @@ on:
         type: string
         required: true
         description: 'Erlang OTP version'
-        default: '27.3.4.6'
+        default: '27.3.4.7'
       couchdb:
         type: string
         required: true
