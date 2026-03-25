@@ -12,7 +12,7 @@ on:
         type: string
         required: true
         description: 'Erlang OTP version'
-        default: '27.3.4.7'
+        default: '27.3.4.9'
       couchdb:
         type: string
         required: true
@@ -70,7 +70,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ vars.ARTIFACTORY_IMG_URL }}/couchdb
+            ${{ vars.ARTIFACTORY_IMG_URL_PUBLIC }}/couchdb
             ghcr.io/${{ github.repository }}
           tags: |
             type=raw,value=${{ github.event.inputs.couchdb }}-r${{ github.event.inputs.release }}-tumbleweed
@@ -97,7 +97,7 @@ jobs:
       - name: Scan Docker Image
         if: ${{ success() }}
         env:
-          IMAGE: ${{ vars.ARTIFACTORY_IMG_URL }}/couchdb:${{ github.event.inputs.couchdb }}-r${{ github.event.inputs.release }}-tumbleweed
+          IMAGE: ${{ vars.ARTIFACTORY_IMG_URL_PUBLIC }}/couchdb:${{ github.event.inputs.couchdb }}-r${{ github.event.inputs.release }}-tumbleweed
           COUCHDB_VERSION: ${{ github.event.inputs.couchdb }}
           RELEASE_VERSION: ${{ github.event.inputs.release }}
           MEND_EMAIL: ${{ secrets.MEND_EMAIL }}
@@ -117,7 +117,7 @@ jobs:
           ERLANG_VERSION: ${{ github.event.inputs.erlang }}
           FAUXTON_VERSION: ${{ github.event.inputs.fauxton }}
           RELEASE_VERSION: ${{ github.event.inputs.release }}
-          IMAGE: ${{ vars.ARTIFACTORY_IMG_URL }}/couchdb:${{ github.event.inputs.couchdb }}-r${{ github.event.inputs.release }}-tumbleweed
+          IMAGE: ${{ vars.ARTIFACTORY_IMG_URL_PUBLIC }}/couchdb:${{ github.event.inputs.couchdb }}-r${{ github.event.inputs.release }}-tumbleweed
         run: |
           # Add step summary
           {
