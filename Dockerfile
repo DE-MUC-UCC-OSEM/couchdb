@@ -18,7 +18,7 @@ ARG FAUXTON_VERSION
 RUN wget https://dlcdn.apache.org/couchdb/source/$COUCHDB_VERSION/apache-couchdb-$COUCHDB_VERSION.tar.gz && \
     tar -xvf apache-couchdb-$COUCHDB_VERSION.tar.gz && \
     cd apache-couchdb-$COUCHDB_VERSION && \
-    ./configure --js-engine=quickjs --disable-spidermonkey && \
+    ./configure --js-engine=quickjs --disable-spidermonkey --enable-nouveau && \
     rm -Rf src/fauxton/* && \
     rm -Rf src/fauxton/.* && \
     curl -L https://github.com/apache/couchdb-fauxton/archive/refs/tags/v$FAUXTON_VERSION.tar.gz | tar --directory src/fauxton --strip-components 1 -zxvf - && \
@@ -45,8 +45,8 @@ RUN mkdir -p /opt/couchdb && \
     tar --directory /opt/couchdb -xvf /tmp/couchdb.tar.xz && \
     chown -R couchdb:couchdb /opt/couchdb && \
     zypper update --no-confirm && \
-    zypper install --no-confirm libicu && \
-    rpm -e --allmatches $(rpm -qa --qf "%{NAME}\n" | grep -v -E "bash|coreutils|filesystem|glibc$|libacl1|libattr1|libcap2|libgcc_s1|libgmp|libncurses|libpcre|libreadline|libselinux|libstdc\+\+|openSUSE-release|system-user-root|terminfo-base|sed|libz1|libjitterentropy3|libopenssl3|crypto-policies|libicu|timezone|ca-certificates|p11-kit|libtasn|libffi") && \
+    zypper install --no-confirm libicu java-26-openjdk-headless && \
+    rpm -e --allmatches $(rpm -qa --qf "%{NAME}\n" | grep -v -E "bash|coreutils|filesystem|glibc$|libacl1|libattr1|libcap2|libgcc_s1|libgmp|libncurses|libpcre|libreadline|libselinux|libstdc\+\+|openSUSE-release|system-user-root|terminfo-base|sed|libz1|libjitterentropy3|libopenssl3|crypto-policies|libicu|timezone|ca-certificates|p11-kit|libtasn|libffi|java-26-openjdk-headless|javapackages|libjvm") && \
     rm -Rf /etc/zypp && \
     rm -Rf /usr/lib/zypp* && \
     rm -Rf /var/{cache,log,run}/* && \
