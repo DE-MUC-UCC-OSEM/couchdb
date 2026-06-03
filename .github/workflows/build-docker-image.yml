@@ -100,7 +100,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Scan Docker Image
-        if: ${{ success() }}
+        if: ${{ success() && github.event.inputs.github_release == 'true' }}
         env:
           IMAGE: ${{ vars.ARTIFACTORY_IMG_URL_PUBLIC }}/couchdb:${{ github.event.inputs.couchdb }}-r${{ github.event.inputs.release }}-tumbleweed
           COUCHDB_VERSION: ${{ github.event.inputs.couchdb }}
