@@ -61,6 +61,7 @@ RUN mkdir -p /opt/couchdb && \
     rm -Rf /tmp/*
 
 COPY --chown=couchdb:couchdb --chmod=740 vm.args /opt/couchdb/etc/vm.args
+COPY --chown=couchdb:couchdb --chmod=664 nouveau.yaml /opt/couchdb/etc/nouveau.yaml
 COPY --chown=couchdb:couchdb --chmod=740 docker-entrypoint.sh /opt/couchdb
 COPY --chown=couchdb:couchdb --chmod=740 supervisord.conf /opt/couchdb/etc/supervisord.conf
 COPY --chown=couchdb:couchdb --chmod=750 couchdb-wrapper.sh /opt/couchdb/couchdb-wrapper.sh
