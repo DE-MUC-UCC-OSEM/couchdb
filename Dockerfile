@@ -1,7 +1,7 @@
 FROM opensuse/tumbleweed:latest AS app
 
 RUN zypper update --no-confirm && \
-    zypper install --no-confirm wget make autoconf gcc-c++ awk openssl-devel libicu-devel
+    zypper install --no-confirm findutils wget make autoconf gcc-c++ awk openssl-devel libicu-devel
 
 WORKDIR /usr/src
 
@@ -18,7 +18,7 @@ ARG FAUXTON_VERSION
 RUN wget https://dlcdn.apache.org/couchdb/source/$COUCHDB_VERSION/apache-couchdb-$COUCHDB_VERSION.tar.gz && \
     tar -xvf apache-couchdb-$COUCHDB_VERSION.tar.gz && \
     cd apache-couchdb-$COUCHDB_VERSION && \
-    ./configure --js-engine=quickjs --disable-spidermonkey --enable-nouveau && \
+    ./configure --js-engine=quickjs --disable-spidermonkey --with-nouveau && \
     rm -Rf src/fauxton/* && \
     rm -Rf src/fauxton/.* && \
     curl -L https://github.com/apache/couchdb-fauxton/archive/refs/tags/v$FAUXTON_VERSION.tar.gz | tar --directory src/fauxton --strip-components 1 -zxvf - && \
