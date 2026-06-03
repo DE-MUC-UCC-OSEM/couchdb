@@ -2,11 +2,6 @@
 
 set -euo pipefail
 
-if [ "$#" -eq 0 ]; then
-  echo "ERROR: no command supplied to entrypoint" >&2
-  exit 1
-fi
-
 # Reject values that would corrupt the .ini files we generate.
 reject_unsafe() {
   local name="$1" value="$2"
@@ -72,46 +67,4 @@ printf "[nouveau]\nenable = true\nurl = http://localhost:5987\n" > /opt/couchdb/
 
 chown -R couchdb:couchdb /opt/couchdb
 
-# Run Nouveau as the couchdb user (uid/gid 5984), matching the CouchDB CMD.
-/bin/chroot --userspec=5984:5984 --skip-chdir / \
-  java -jar /opt/couchdb/nouveau/nouveau.jar server /opt/couchdb/nouveau/nouveau.yaml &
-NOUVEAU_PID=$!
-
-# Wait for Nouveau to accept TCP connections, but bail out if it dies or never starts.
-NOUVEAU_TIMEOUT="${NOUVEAU_TIMEOUT:-60}"
-for ((i = 0; i < NOUVEAU_TIMEOUT; i++)); do
-  if ! kill -0 "$NOUVEAU_PID" 2>/dev/null; then
-    echo "ERROR: Nouveau exited before becoming ready" >&2
-    wait "$NOUVEAU_PID" || true
-    exit 1
-  fi
-  if (echo > /dev/tcp/localhost/5987) 2>/dev/null; then
-    break
-  fi
-  echo "Waiting for Nouveau..."
-  sleep 1
-done
-if ! (echo > /dev/tcp/localhost/5987) 2>/dev/null; then
-  echo "ERROR: Nouveau did not become ready within ${NOUVEAU_TIMEOUT}s" >&2
-  kill -TERM "$NOUVEAU_PID" 2>/dev/null || true
-  wait "$NOUVEAU_PID" 2>/dev/null || true
-  exit 1
-fi
-
-"$@" &
-COUCHDB_PID=$!
-
-# Forward shutdown signals to both children and wait for them to actually exit.
-shutdown() {
-  trap - TERM INT QUIT
-  kill -TERM "$COUCHDB_PID" "$NOUVEAU_PID" 2>/dev/null || true
-  wait "$COUCHDB_PID" 2>/dev/null || true
-  wait "$NOUVEAU_PID" 2>/dev/null || true
-}
-trap shutdown TERM INT QUIT
-
-wait "$COUCHDB_PID"
-COUCHDB_EXIT=$?
-kill -TERM "$NOUVEAU_PID" 2>/dev/null || true
-wait "$NOUVEAU_PID" 2>/dev/null || true
-exit "$COUCHDB_EXIT"
+exec /usr/bin/supervisord -c /opt/couchdb/etc/supervisord.conf

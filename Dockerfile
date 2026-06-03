@@ -48,7 +48,7 @@ RUN mkdir -p /opt/couchdb && \
     tar --directory /opt/couchdb -xvf /tmp/couchdb.tar.xz && \
     chown -R couchdb:couchdb /opt/couchdb && \
     zypper update --no-confirm && \
-    zypper install --no-confirm libicu java-21-openjdk-headless && \
+    zypper install --no-confirm libicu java-21-openjdk-headless supervisor && \
     rm -Rf /etc/zypp && \
     rm -Rf /usr/lib/zypp* && \
     rm -Rf /var/{cache,log,run}/* && \
@@ -62,6 +62,8 @@ RUN mkdir -p /opt/couchdb && \
 
 COPY --chown=couchdb:couchdb --chmod=740 vm.args /opt/couchdb/etc/vm.args
 COPY --chown=couchdb:couchdb --chmod=740 docker-entrypoint.sh /opt/couchdb
+COPY --chown=couchdb:couchdb --chmod=740 supervisord.conf /opt/couchdb/etc/supervisord.conf
+COPY --chown=couchdb:couchdb --chmod=750 couchdb-wrapper.sh /opt/couchdb/couchdb-wrapper.sh
 RUN chown -R couchdb:couchdb /opt/couchdb
 
 FROM scratch
@@ -82,5 +84,3 @@ LABEL org.opencontainers.image.url="https://github.com/DE-MUC-UCC-OSEM/couchdb"
 LABEL org.opencontainers.image.source="https://github.com/DE-MUC-UCC-OSEM/couchdb"
 LABEL org.opencontainers.image.description="Apache CouchDB __COUCHDB_VERSION__-r__RELEASE_VERSION__-tumbleweed with ErlangOTP __ERLANG_OTP_VERSION__ and Fauxton __FAUXTON_VERSION__"
 LABEL org.opencontainers.image.created="__CURRENT_TIME__"
-
-CMD ["/bin/chroot", "--userspec=5984:5984", "--skip-chdir", "/", "/opt/couchdb/bin/couchdb"]
