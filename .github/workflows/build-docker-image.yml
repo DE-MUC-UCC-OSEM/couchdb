@@ -26,7 +26,7 @@ on:
       github_release:
         type: boolean
         required: true
-        description: 'Create a GitHub release with the built artifacts'
+        description: 'Create a GitHub release'
         default: true
 
 jobs:
