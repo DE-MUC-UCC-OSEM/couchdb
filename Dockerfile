@@ -49,7 +49,6 @@ RUN mkdir -p /opt/couchdb && \
     chown -R couchdb:couchdb /opt/couchdb && \
     zypper update --no-confirm && \
     zypper install --no-confirm libicu java-21-openjdk-headless && \
-    rpm -e --allmatches $(rpm -qa --qf "%{NAME}\n" | grep -v -E "bash|coreutils|filesystem|glibc$|libacl1|libattr1|libcap2|libgcc_s1|libgmp|libncurses|libpcre|libreadline|libselinux|libstdc\+\+|openSUSE-release|system-user-root|terminfo-base|sed|libz1|libjitterentropy3|libopenssl3|crypto-policies|libicu|timezone|ca-certificates|p11-kit|libtasn|libffi|java-21-openjdk-headless|javapackages|libjvm") && \
     rm -Rf /etc/zypp && \
     rm -Rf /usr/lib/zypp* && \
     rm -Rf /var/{cache,log,run}/* && \
