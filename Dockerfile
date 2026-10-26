@@ -15,10 +15,12 @@ RUN wget https://github.com/erlang/otp/releases/download/OTP-$ERLANG_OTP_VERSION
 
 ARG COUCHDB_VERSION
 ARG FAUXTON_VERSION
+COPY couch_log_writer_stdout.erl /usr/src/couch_log_writer_stdout.erl
 RUN wget https://dlcdn.apache.org/couchdb/source/$COUCHDB_VERSION/apache-couchdb-$COUCHDB_VERSION.tar.gz && \
     tar -xvf apache-couchdb-$COUCHDB_VERSION.tar.gz && \
     cd apache-couchdb-$COUCHDB_VERSION && \
     ./configure --js-engine=quickjs --disable-spidermonkey && \
+    cp /usr/src/couch_log_writer_stdout.erl src/couch_log/src/ && \
     rm -Rf src/fauxton/* && \
     rm -Rf src/fauxton/.* && \
     curl -L https://github.com/apache/couchdb-fauxton/archive/refs/tags/v$FAUXTON_VERSION.tar.gz | tar --directory src/fauxton --strip-components 1 -zxvf - && \

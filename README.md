@@ -31,8 +31,18 @@ The following can be configured via environment variables
 * COUCHDB_SHARDS (https://docs.couchdb.org/en/stable/cluster/sharding.html#shards-and-replicas)
 * NODENAME (https://www.erlang.org/doc/system/distributed.html#distribution-command-line-flags)
 * ERLANG_COOKIE (https://www.erlang.org/doc/system/distributed.html#distribution-command-line-flags)
+* COUCHDB_LOG_STDERR_LEVEL (see [Logging](#logging), default `error`)
 
 Any additional configuration can be applied by mounting an ini file into the container.
 ```
 -v /path/to/local.ini:/opt/couchdb/etc/local.d/local.ini
 ```
+
+## Logging
+
+Log entries at or above `COUCHDB_LOG_STDERR_LEVEL` (`[log] stderr_level`, default `error`) are written to stderr, all other entries are written to stdout.
+Valid levels are `debug`, `info`, `notice`, `warning`, `error`, `critical`, `alert` and `emergency`.
+
+When the container is started with a TTY (`-t`), Docker merges stdout and stderr into a single stream, so the split is only visible without `-t` (e.g. `docker run -d` or Kubernetes).
+
+To restore the default CouchDB behaviour (everything to stderr), set `[log] writer = stderr` in a mounted ini file.

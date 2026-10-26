@@ -38,6 +38,11 @@ printf "[chttpd]\nbind_address = 0.0.0.0\nport = 5984\n" > /opt/couchdb/etc/defa
 printf "[couchdb]\njs_engine = quickjs\n" > /opt/couchdb/etc/default.d/10-quickjs.ini
 printf "[couchdb]\nmax_document_size = 25000000\n" > /opt/couchdb/etc/default.d/10-size.ini
 
+printf "[log]\nwriter = stdout\n" > /opt/couchdb/etc/default.d/10-logging.ini
+if [ "$COUCHDB_LOG_STDERR_LEVEL" ]; then
+  printf "stderr_level = %s\n" "$COUCHDB_LOG_STDERR_LEVEL" >> /opt/couchdb/etc/default.d/10-logging.ini
+fi
+
 chown -R couchdb:couchdb /opt/couchdb
 
 exec "$@"
