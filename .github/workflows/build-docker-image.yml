@@ -75,6 +75,27 @@ jobs:
           tags: |
             type=raw,value=${{ github.event.inputs.couchdb }}-r${{ github.event.inputs.release }}-tumbleweed
 
+      - name: Build Docker image for testing
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          provenance: false
+          build-args: |
+            ERLANG_OTP_VERSION=${{ github.event.inputs.erlang }}
+            COUCHDB_VERSION=${{ github.event.inputs.couchdb }}
+            FAUXTON_VERSION=${{ github.event.inputs.fauxton }}
+            RELEASE_VERSION=${{ github.event.inputs.release }}
+            MEND_EMAIL=${{ secrets.MEND_EMAIL }}
+            MEND_ORGANIZATION=${{ secrets.MEND_ORGANIZATION }}
+            MEND_URL=${{ secrets.MEND_URL }}
+            MEND_USER_KEY=${{ secrets.MEND_USER_KEY }}
+          push: false
+          load: true
+          tags: couchdb:ci-test
+
+      - name: Test logging (errors to stderr, everything else to stdout)
+        run: bash ${{ github.workspace }}/test-logging.sh couchdb:ci-test
+
       - name: Build and push Docker image
         id: push
         uses: docker/build-push-action@v7

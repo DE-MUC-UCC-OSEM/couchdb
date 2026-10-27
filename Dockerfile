@@ -54,6 +54,7 @@ COPY --from=app /tmp/couchdb.tar.xz /tmp/couchdb.tar.xz
 RUN mkdir -p /opt/couchdb && \
     groupadd -g 5984 -r couchdb && useradd -u 5984 -d /opt/couchdb -g couchdb couchdb && \
     tar --directory /opt/couchdb -xvf /tmp/couchdb.tar.xz && \
+    test -f /opt/couchdb/lib/couch_log-*/ebin/couch_log_writer_stdout.beam && \
     chown -R couchdb:couchdb /opt/couchdb && \
     zypper update --no-confirm && \
     zypper install --no-confirm libicu && \

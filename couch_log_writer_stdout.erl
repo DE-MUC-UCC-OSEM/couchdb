@@ -10,9 +10,10 @@
 % License for the specific language governing permissions and limitations under
 % the License.
 
-% Same as couch_log_writer_stderr, but only entries at or above
-% [log] stderr_level (default: error) are written to stderr.
-% Everything else is written to stdout.
+% Same as couch_log_writer_stderr, but only error, critical, alert and
+% emergency entries are written to stderr. Everything else is written to
+% stdout, including structured reports (level `report`, e.g. mango-stats)
+% and any level not listed here.
 
 -module(couch_log_writer_stdout).
 -behaviour(couch_log_writer).
@@ -49,15 +50,31 @@ write(#log_entry{} = Entry, St) ->
     ],
     MsgSize = couch_log_config:get(max_message_size),
     Data = couch_log_trunc_io:format(Fmt, Args, MsgSize),
-    io:format(device(Level), [Data, Msg, "\n"], []),
+    write_line(device(Level), [Data, Msg, "\n"]),
     {ok, St}.
 
-device(Level) ->
-    Threshold = config:get("log", "stderr_level", "error"),
-    case
-        couch_log_util:level_to_integer(Level) >=
-            couch_log_util:level_to_integer(Threshold)
-    of
-        true -> standard_error;
-        false -> user
-    end.
+% Must be total: a crash here takes down couch_log_server.
+device(Level) when
+    Level =:= error;
+    Level =:= err;
+    Level =:= critical;
+    Level =:= crit;
+    Level =:= alert;
+    Level =:= emergency;
+    Level =:= emerg
+->
+    standard_error;
+device(_) ->
+    user.
+
+% Never fail where couch_log_writer_stderr would not: if stdout cannot be
+% written, fall back to stderr.
+write_line(user, Line) ->
+    try
+        io:format(user, Line, [])
+    catch
+        _:_ ->
+            io:format(standard_error, Line, [])
+    end;
+write_line(standard_error, Line) ->
+    io:format(standard_error, Line, []).

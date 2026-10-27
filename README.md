@@ -33,7 +33,6 @@ The following can be configured via environment variables
 * COUCHDB_SHARDS (https://docs.couchdb.org/en/stable/cluster/sharding.html#shards-and-replicas)
 * NODENAME (https://www.erlang.org/doc/system/distributed.html#distribution-command-line-flags)
 * ERLANG_COOKIE (https://www.erlang.org/doc/system/distributed.html#distribution-command-line-flags)
-* COUCHDB_LOG_STDERR_LEVEL (see [Logging](#logging), default `error`)
 
 Any additional configuration can be applied by mounting an ini file into the container.
 ```
@@ -42,8 +41,12 @@ Any additional configuration can be applied by mounting an ini file into the con
 
 ## Logging
 
-Log entries at or above `COUCHDB_LOG_STDERR_LEVEL` (`[log] stderr_level`, default `error`) are written to stderr, all other entries are written to stdout.
-Valid levels are `debug`, `info`, `notice`, `warning`, `error`, `critical`, `alert` and `emergency`.
+Errors are written to stderr, everything else is written to stdout:
+
+* stderr: `error`, `critical`, `alert`, `emergency`
+* stdout: `debug`, `info`, `notice`, `warning` and `report` entries (e.g. Mango `mango-stats`)
+
+Which entries are logged at all is still controlled by `[log] level` and `[log] report_level`.
 
 When the container is started with a TTY (`-t`), Docker merges stdout and stderr into a single stream, so the split is only visible without `-t` (e.g. `docker run -d` or Kubernetes).
 
