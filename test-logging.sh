@@ -101,8 +101,11 @@ EMIT='
 '
 
 echo "Starting $IMAGE"
+# NODENAME must be an IP or FQDN: with -name, Erlang refuses to connect to a
+# node whose host is a bare "localhost" (the entrypoint default).
 docker run -d --name "$NAME" -p "127.0.0.1:$PORT:5984" \
   -e SINGLE_NODE=true -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=logtest \
+  -e NODENAME=127.0.0.1 \
   "$IMAGE" >/dev/null
 
 for _ in $(seq 1 60); do
