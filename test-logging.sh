@@ -73,7 +73,9 @@ for _ in $(seq 1 60); do
 done
 curl -sf "$URL/_up" >/dev/null || { echo "CouchDB did not come up"; exit 1; }
 
+echo "Reading couch_log_server pid via rpc"
 PID_BEFORE=$(erl_eval "$LOG_SERVER_PID")
+echo "Emitting test log entries"
 
 erl_eval "$EMIT"
 curl -sf -X PUT "$URL/logtest" >/dev/null
@@ -113,7 +115,9 @@ for marker in logtest-error logtest-critical logtest-alert logtest-emergency; do
   expect_on stderr stdout "$marker"
 done
 
-if grep -qE 'CRASH REPORT|couch_log_server terminated' "$TMP/stdout" "$TMP/stderr"; then
+# Only couch_log_server crashes count; CouchDB logs unrelated errors on a
+# fresh node (e.g. chttpd_auth_cache before _users exists).
+if grep -qF couch_log_server "$TMP/stdout" "$TMP/stderr"; then
   result fail "no logger crashes"
 else
   result ok "no logger crashes"
