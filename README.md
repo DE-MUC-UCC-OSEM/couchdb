@@ -5,6 +5,8 @@ CouchDB running in a minimal OpenSUSE Docker Image
 
 Building CouchDB from scratch using Erlang OTP and Fauxton sources. Everything put into a minimal Container image built from an OpenSUSE tumbleweed image
 
+Fauxton is built from source at the requested version and replaces the Fauxton bundled with the CouchDB release. The Mend source scan only covers the npm packages that end up in the Fauxton bundle (see `fauxton-shipped-deps.js`), not Fauxton's build and test tooling.
+
 ## Run the image
 
 You can run the image via Docker

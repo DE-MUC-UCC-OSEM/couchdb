@@ -1,7 +1,9 @@
 FROM opensuse/tumbleweed:latest AS app
 
 RUN zypper update --no-confirm && \
-    zypper install --no-confirm wget make autoconf gcc-c++ awk openssl-devel libicu-devel
+    zypper install --no-confirm wget make autoconf gcc-c++ awk openssl-devel libicu-devel nodejs26 npm26 && \
+    node --version && \
+    npm --version
 
 WORKDIR /usr/src
 
@@ -16,6 +18,7 @@ RUN wget https://github.com/erlang/otp/releases/download/OTP-$ERLANG_OTP_VERSION
 ARG COUCHDB_VERSION
 ARG FAUXTON_VERSION
 COPY couch_log_writer_stdout.erl /usr/src/couch_log_writer_stdout.erl
+COPY fauxton-shipped-deps.js /usr/src/fauxton-shipped-deps.js
 RUN wget https://dlcdn.apache.org/couchdb/source/$COUCHDB_VERSION/apache-couchdb-$COUCHDB_VERSION.tar.gz && \
     tar -xvf apache-couchdb-$COUCHDB_VERSION.tar.gz && \
     cd apache-couchdb-$COUCHDB_VERSION && \
@@ -24,6 +27,12 @@ RUN wget https://dlcdn.apache.org/couchdb/source/$COUCHDB_VERSION/apache-couchdb
     rm -Rf src/fauxton/* && \
     rm -Rf src/fauxton/.* && \
     curl -L https://github.com/apache/couchdb-fauxton/archive/refs/tags/v$FAUXTON_VERSION.tar.gz | tar --directory src/fauxton --strip-components 1 -zxvf - && \
+    rm -Rf share/www && \
+    cd src/fauxton && \
+    npm ci --ignore-scripts --no-audit --no-fund && \
+    ./node_modules/grunt-cli/bin/grunt couchdb && \
+    FAUXTON_VERSION=$FAUXTON_VERSION node /usr/src/fauxton-shipped-deps.js /usr/src/mend-scan/fauxton && \
+    cd ../.. && \
     make && \
     make install && \
     tar --create --file=/tmp/couchdb.tar.xz --directory=/usr/src/apache-couchdb-$COUCHDB_VERSION/rel/couchdb --xz --verbose --utc .
@@ -36,7 +45,7 @@ ARG MEND_URL
 ARG MEND_USER_KEY
 RUN curl -L https://downloads.mend.io/cli/linux_amd64/mend -o /tmp/mend && chmod +x /tmp/mend && \
     /tmp/mend update && \
-    /tmp/mend dep -d "/usr/src/apache-couchdb-$COUCHDB_VERSION" -e -s "OpenScape UC Portfolio//OSEM third party applications//couchdb-osem-sourcecode - $COUCHDB_VERSION-r$RELEASE_VERSION" -u --non-interactive
+    /tmp/mend dep -d "/usr/src/mend-scan" -e -s "OpenScape UC Portfolio//OSEM third party applications//couchdb-osem-sourcecode - $COUCHDB_VERSION-r$RELEASE_VERSION" -u --non-interactive
 
 FROM opensuse/tumbleweed:latest AS base
 
