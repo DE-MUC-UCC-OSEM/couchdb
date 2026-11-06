@@ -5,14 +5,20 @@
 # that errors land on stderr, everything else on stdout, and that
 # couch_log_server never restarts.
 #
-# Usage: test-logging.sh <image>
+# Usage: test-logging.sh <image> <tools-image>
+#
+# tools-image: any image with erl in PATH, e.g. the app stage of the
+# Dockerfile (docker build --target app -t couchdb:ci-tools .).
 
 set -euo pipefail
 
-IMAGE="${1:?usage: $0 <image>}"
+IMAGE="${1:?usage: $0 <image> <tools-image>}"
+TOOLS_IMAGE="${2:?usage: $0 <image> <tools-image>}"
 NAME="couchdb-logtest-$$"
 PORT="${LOGTEST_PORT:-15984}"
 URL="http://admin:logtest@127.0.0.1:$PORT"
+NODE="couchdb@127.0.0.1"
+COOKIE="logtest"
 TMP=$(mktemp -d)
 
 cleanup() {
@@ -26,39 +32,15 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Print the -name and -setcookie arguments of the running CouchDB VM, one per
-# line. Read from /proc so they match whatever the entrypoint put into
-# vm.args. The image has no grep/pgrep, so this uses bash builtins only.
-vm_identity() {
-  docker exec "$NAME" bash -c '
-    for f in /proc/[0-9]*/cmdline; do
-      args=()
-      while IFS= read -r -d "" a; do args+=("$a"); done < "$f" 2>/dev/null || continue
-      [[ ${args[0]:-} == *beam* ]] || continue
-      for ((i = 0; i < ${#args[@]}; i++)); do
-        case ${args[i]} in
-          -name) node=${args[i+1]} ;;
-          -setcookie) cookie=${args[i+1]} ;;
-        esac
-      done
-      [ -n "${node:-}" ] && [ -n "${cookie:-}" ] || continue
-      printf "%s\n%s\n" "$node" "$cookie"
-      exit 0
-    done
-    exit 1
-  '
-}
-
-# Evaluate an Erlang expression in a hidden node inside the container. The
-# CouchDB node name is available to the expression as LOGTEST_NODE.
+# Evaluate an Erlang expression in a hidden node. The image has no shell and no
+# erl, so the node runs in a sidecar container from TOOLS_IMAGE that shares the
+# network namespace of the CouchDB container. The CouchDB node name is
+# available to the expression as LOGTEST_NODE.
 erl_eval() {
-  docker exec -e LOGTEST_NODE="$NODE" -e LOGTEST_COOKIE="$COOKIE" "$NAME" bash -c '
-    ROOT=/opt/couchdb
-    ERTS_VSN=$(cut -d" " -f1 "$ROOT/releases/start_erl.data")
-    exec "$ROOT/erts-$ERTS_VSN/bin/erl" -boot "$ROOT/releases/start_clean" \
-      -name "logtest$$@${LOGTEST_NODE#*@}" -hidden -setcookie "$LOGTEST_COOKIE" \
+  docker run --rm --network "container:$NAME" \
+    -e LOGTEST_NODE="$NODE" "$TOOLS_IMAGE" \
+    erl -name "logtest$$-$RANDOM@${NODE#*@}" -hidden -setcookie "$COOKIE" \
       -noshell -eval "$1"
-  ' _ "$1"
 }
 
 CONNECT='
@@ -102,23 +84,18 @@ EMIT='
 
 echo "Starting $IMAGE"
 # NODENAME must be an IP or FQDN: with -name, Erlang refuses to connect to a
-# node whose host is a bare "localhost" (the entrypoint default).
+# node whose host is a bare "localhost" (the launcher default).
 docker run -d --name "$NAME" -p "127.0.0.1:$PORT:5984" \
   -e SINGLE_NODE=true -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=logtest \
-  -e NODENAME=127.0.0.1 \
+  -e NODENAME="${NODE#*@}" -e ERLANG_COOKIE="$COOKIE" \
   "$IMAGE" >/dev/null
 
-for _ in $(seq 1 60); do
+for _ in $(seq 1 "${LOGTEST_STARTUP_SECONDS:-60}"); do
   curl -sf "$URL/_up" >/dev/null 2>&1 && break
   sleep 1
 done
 curl -sf "$URL/_up" >/dev/null || { echo "CouchDB did not come up"; exit 1; }
 
-{ read -r NODE; read -r COOKIE; } < <(vm_identity) || true
-if [ -z "${NODE:-}" ] || [ -z "${COOKIE:-}" ]; then
-  echo "Could not read -name/-setcookie of the CouchDB VM"
-  exit 1
-fi
 echo "Connecting to $NODE"
 erl_eval "$CONNECT"
 

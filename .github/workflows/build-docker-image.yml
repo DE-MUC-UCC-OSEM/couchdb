@@ -93,8 +93,35 @@ jobs:
           load: true
           tags: couchdb:ci-test
 
+      # The runtime image has no shell tools and no erl. The tests run erl,
+      # bash and coreutils in sidecar containers of the app stage (cached).
+      - name: Build tools image for testing
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          provenance: false
+          target: app
+          build-args: |
+            ERLANG_OTP_VERSION=${{ github.event.inputs.erlang }}
+            COUCHDB_VERSION=${{ github.event.inputs.couchdb }}
+            FAUXTON_VERSION=${{ github.event.inputs.fauxton }}
+            RELEASE_VERSION=${{ github.event.inputs.release }}
+            MEND_EMAIL=${{ secrets.MEND_EMAIL }}
+            MEND_ORGANIZATION=${{ secrets.MEND_ORGANIZATION }}
+            MEND_URL=${{ secrets.MEND_URL }}
+            MEND_USER_KEY=${{ secrets.MEND_USER_KEY }}
+          push: false
+          load: true
+          tags: couchdb:ci-tools
+
+      - name: Test image (content, user, JavaScript, restart, cookie)
+        run: |
+          bash ${{ github.workspace }}/test-image.sh couchdb:ci-test couchdb:ci-tools
+          SIZE=$(docker image inspect couchdb:ci-test --format '{{.Size}}')
+          echo "Image size: $((SIZE / 1024 / 1024)) MB (uncompressed)" | tee -a $GITHUB_STEP_SUMMARY
+
       - name: Test logging (errors to stderr, everything else to stdout)
-        run: bash ${{ github.workspace }}/test-logging.sh couchdb:ci-test
+        run: bash ${{ github.workspace }}/test-logging.sh couchdb:ci-test couchdb:ci-tools
 
       - name: Build and push Docker image
         id: push
