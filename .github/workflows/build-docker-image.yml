@@ -23,6 +23,11 @@ on:
         required: true
         description: 'CouchDB Fauxton version'
         default: '1.3.7'
+      create_release:
+        type: boolean
+        required: false
+        description: 'Create an official GitHub release (incl. git tag) after a successful build'
+        default: false
 
 jobs:
   build_and_push:
@@ -157,17 +162,15 @@ jobs:
           curl https://downloads.mend.io/cli/linux_amd64/mend -o ${{ github.workspace }}/mend && chmod +x ${{ github.workspace }}/mend
           ${{ github.workspace }}/mend image ${IMAGE,,} -s "OpenScape UC Portfolio//OSEM third party applications//couchdb-osem-docker-image - $COUCHDB_VERSION-r$RELEASE_VERSION-tumbleweed"
 
-      - name: Create release information
+      - name: Create build summary
         if: ${{ success() }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COUCHDB_VERSION: ${{ github.event.inputs.couchdb }}
           ERLANG_VERSION: ${{ github.event.inputs.erlang }}
           FAUXTON_VERSION: ${{ github.event.inputs.fauxton }}
-          RELEASE_VERSION: ${{ github.event.inputs.release }}
           IMAGE: ${{ vars.ARTIFACTORY_IMG_URL_PUBLIC }}/couchdb:${{ github.event.inputs.couchdb }}-r${{ github.event.inputs.release }}-tumbleweed
+          CREATE_RELEASE: ${{ inputs.create_release }}
         run: |
-          # Add step summary
           {
             echo "# Apache CouchDB"
             echo ""
@@ -182,8 +185,24 @@ jobs:
             echo "| Apache CouchDB | $COUCHDB_VERSION |"
             echo "| Erlang OTP | $ERLANG_VERSION |"
             echo "| Fauxton | $FAUXTON_VERSION |"
+            echo ""
+            if [ "$CREATE_RELEASE" = "true" ]; then
+              echo "GitHub release: created"
+            else
+              echo "GitHub release: skipped (image pushed to registries only, no tag created)"
+            fi
           } >> $GITHUB_STEP_SUMMARY
 
+      - name: Create GitHub release
+        if: ${{ success() && inputs.create_release }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COUCHDB_VERSION: ${{ github.event.inputs.couchdb }}
+          ERLANG_VERSION: ${{ github.event.inputs.erlang }}
+          FAUXTON_VERSION: ${{ github.event.inputs.fauxton }}
+          RELEASE_VERSION: ${{ github.event.inputs.release }}
+          IMAGE: ${{ vars.ARTIFACTORY_IMG_URL_PUBLIC }}/couchdb:${{ github.event.inputs.couchdb }}-r${{ github.event.inputs.release }}-tumbleweed
+        run: |
           cat > ${{ github.workspace }}/release-notes.md <<EOF
           ## CouchDB release ${{ github.event.inputs.couchdb }}-${{ github.event.inputs.release }}
           - **CouchDB version**: $COUCHDB_VERSION
@@ -196,6 +215,7 @@ jobs:
           EOF
           gh release create "$COUCHDB_VERSION-r$RELEASE_VERSION-tumbleweed" \
               --repo="$GITHUB_REPOSITORY" \
+              --target="$GITHUB_SHA" \
               --title="$COUCHDB_VERSION-r$RELEASE_VERSION-tumbleweed" \
               --notes-file release-notes.md
 
