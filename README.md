@@ -14,6 +14,7 @@ The final image is assembled file by file (`rootfs` stage in the `Dockerfile`) a
 * the CouchDB release without the Erlang development tools (`erl`, `erlc`, `escript`, ...), sources, headers and start scripts; binaries and `.beam` files are stripped
 * the shared libraries the binaries are linked against (glibc, OpenSSL, ICU, libstdc++, ...), ICU collation data, time zones, CA certificates
 * `/bin/sh` (dash) and `df`: the Erlang VM starts ports, `epmd` and the JavaScript query servers through `/bin/sh`, and `os_mon`'s disk monitor needs `sh` and `df`
+* `du`: not needed by CouchDB, kept for checking the disk usage of the data directory (`docker exec <container> du -sh /opt/couchdb/data`)
 * `/usr/local/bin/couchdb-launcher`: the entrypoint (see below)
 * `/usr/local/bin/healthcheck`: the container healthcheck
 
@@ -24,7 +25,7 @@ The final image is assembled file by file (`rootfs` stage in the `Dockerfile`) a
 
 The largest remaining parts are the ICU collation data (32 MB), Fauxton (24 MB) and the shared libraries (20 MB).
 
-There is no bash, no coreutils (`ls`, `cat`, `chroot`, ...), no `rpm` and no `zypper`. The release in `/opt/couchdb` belongs to root; only `data`, `etc` and `var` belong to the `couchdb` user (5984).
+There is no bash, no coreutils apart from `df` and `du` (no `ls`, `cat`, `chroot`, ...), no `rpm` and no `zypper`. The release in `/opt/couchdb` belongs to root; only `data`, `etc` and `var` belong to the `couchdb` user (5984).
 
 `couchdb-launcher` (source in `launcher/`) writes the configuration from the environment variables to `/opt/couchdb/etc/default.d`, writes `-name` and `-setcookie` to `/opt/couchdb/etc/vm.runtime.args`, gives `data`, `etc` and `var` to the `couchdb` user (also for mounted volumes, read-only mounts are skipped), drops to that user and starts the Erlang VM. Arguments of `docker run` are passed on to the VM.
 

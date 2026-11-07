@@ -126,9 +126,12 @@ RUN ERL=$(echo /usr/src/couchdb-release/erts-*/bin/erl) && \
 # /bin/sh is required at runtime: Erlang starts ports ({spawn, Cmd}: the
 # QuickJS query servers, os_mon), epmd and "kill" through /bin/sh, os_mon's
 # disksup needs "sh -s" and df. dash is the smallest POSIX shell available.
+# du is not needed by CouchDB; it is kept for checking the disk usage of the
+# data directory (docker exec <container> du -sh /opt/couchdb/data).
 RUN cp /usr/bin/dash /rootfs/usr/bin/dash && \
     ln -s dash /rootfs/usr/bin/sh && \
-    cp /usr/bin/df /rootfs/usr/bin/df
+    cp /usr/bin/df /rootfs/usr/bin/df && \
+    cp /usr/bin/du /rootfs/usr/bin/du
 
 # Strip all ELF files and keep the list for the library lookup below
 RUN find /rootfs -type f -print0 | \
@@ -167,12 +170,12 @@ RUN chown -R root:root /rootfs/opt/couchdb && \
 
 # Smoke test: fails the build on missing libraries. The chroot has no /dev
 # and no /proc, the container runtime provides them.
-RUN chroot /rootfs /bin/sh -c 'df --version' > /dev/null && echo "sh and df ok" && \
+RUN chroot /rootfs /bin/sh -c 'df --version && du --version' > /dev/null && echo "sh, df and du ok" && \
     QJS=$(cd /rootfs && echo opt/couchdb/lib/couch_quickjs-*/priv/couchjs_mainjs) && \
     printf '["reset"]\n' | chroot /rootfs /$QJS | grep true > /dev/null && echo "couchjs ok" && \
     { chroot /rootfs /usr/local/bin/healthcheck || true; } | grep usage > /dev/null && echo "healthcheck ok"
 
-# Runtime image: CouchDB, dash, df and the launcher. No bash, no coreutils,
+# Runtime image: CouchDB, dash, df, du and the launcher. No bash, no coreutils,
 # no package manager. Do not use RUN in this stage.
 FROM scratch
 

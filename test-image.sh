@@ -89,7 +89,7 @@ only() { # only <directory regex> <expected names>: files directly in the direct
   got=$(sed -n -E "s#^$1/([^/]+)\$#\\1#p" "$TMP/files" | sort | tr '\n' ' ')
   [ "$got" = "$2 " ] || { echo "$1: $got"; return 1; }
 }
-if out=$(only 'usr/bin' 'dash df sh'); then result ok "usr/bin: dash, df, sh only"; else result fail "usr/bin: dash, df, sh only" "$out"; fi
+if out=$(only 'usr/bin' 'dash df du sh'); then result ok "usr/bin: dash, df, du, sh only"; else result fail "usr/bin: dash, df, du, sh only" "$out"; fi
 if out=$(only 'usr/local/bin' 'couchdb-launcher healthcheck'); then result ok "usr/local/bin: launcher and healthcheck only"; else result fail "usr/local/bin: launcher and healthcheck only" "$out"; fi
 if out=$(only 'opt/couchdb/erts-[^/]+/bin' 'beam.smp epmd erl_child_setup erlexec inet_gethost'); then result ok "erts: no Erlang tools"; else result fail "erts: no Erlang tools" "$out"; fi
 check "no usr/sbin, no opt/couchdb/bin scripts, no docker-entrypoint.sh" \
@@ -124,6 +124,7 @@ done
 check "docker reports healthy" test "$healthy" = healthy
 check "healthcheck --couchdb exits 0" docker exec "$PREFIX-a" /usr/local/bin/healthcheck --couchdb
 check "healthcheck without arguments exits 1" bash -c "! docker exec '$PREFIX-a' /usr/local/bin/healthcheck"
+check "du works" docker exec "$PREFIX-a" du -s /opt/couchdb/data
 check "docker exec ls fails (no coreutils)" bash -c "! docker exec '$PREFIX-a' ls /"
 
 PROC=$(inside "$PREFIX-a" 'cat /proc/1/comm /proc/1/status; tr "\0" "\n" < /proc/1/cmdline')
